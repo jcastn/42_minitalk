@@ -1,18 +1,26 @@
-FLAGS = -Wall -Wextra -Werror
+LIBFT = ./libft_upgraded/libft.a
+LIBFT_DIR = ./libft_upgraded/
 CC = cc
+FLAGS = -Wall -Wextra -Werror -I$(LIBFT_DIR) -g -fsanitize=address
 
-all : client server
+all : client server 
 
-client: client.c
-	$(CC) $(FLAGS) client.c -o client
+$(LIBFT):
+	make -C $(LIBFT_DIR) all
 
-server: server.c
-	$(CC) $(FLAGS) server.c -o server
+client: client.c minitalk.h $(LIBFT)
+	$(CC) $(FLAGS) client.c $(LIBFT) -o client
+
+server: server.c minitalk.h $(LIBFT)
+	$(CC) $(FLAGS) server.c $(LIBFT) -o server
 
 clean :
+	make -C $(LIBFT_DIR) clean
 	rm -rf server client
 
-fclean : clean
+fclean :
+	make -C $(LIBFT_DIR) fclean
+	rm -rf server client
 
 re : fclean all
 

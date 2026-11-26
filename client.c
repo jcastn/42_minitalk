@@ -1,59 +1,61 @@
 /* MiniTalk Client */
-#include <signal.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
+#include "minitalk.h"
 
-int	ft_strlen(char *str)
+bool	get_ack(pid_t pid_client)
 {
-	int	i;
-
-	i = 0;
-	while (str[i])
-		i++;
-	return (i);
+	(void)pid_client;
+	//ft_printf("X");
+	ft_printf(" OK\n");
+	return (true);
 }
 
-void	send_string(char *str, pid_t pid)
+void	send_string(char *str, pid_t pid_server)
 {
 	int		bit;
-	int 	i;
+	size_t 	i;
 	int 	j;
 	int		c;
 
 	i = 0;
 	while (i < ft_strlen(str) + 1)
 	{
-		printf("\nchar '%c' :\n", str[i]);
+		ft_printf("\nchar '%c' :\n", str[i]);
 		c = str[i];
 		j = 7;
 		while (j >= 0)
 		{
 			bit = (c >> j) & 1;
-			printf("sent bit : %d\n", bit);
-			usleep(10 * 1000);
-			if (bit == 0)
-				kill(pid, SIGUSR1);
-			else
-				kill(pid, SIGUSR2);
+			ft_printf("(%d) sent bit : %d\n", j, bit);
+		//	ack = false;
+			//while (!ack)
+			{
+				usleep(10 * 100);
+				if (bit == 0)
+					kill(pid_server, SIGUSR1);
+				else
+					kill(pid_server, SIGUSR2);
+	//			ack = get_ack(pid_server);
+			}
 			j--;
 		}
 		i++;
 	}
 }
 
-
 int	main(int argc, char **argv)
 {
-	pid_t	pid;
+	pid_t	pid_server;
+	pid_t	pid_client;
 
-	printf("MiniTalk Client\n");
+	pid_client = getpid();
+	ft_printf("MiniTalk Client\n");
+	ft_printf("Client PID : %d\n", pid_client);
 	if (argc != 3)
 	{
-		printf("invalid args (1st : Server PID ; 2nd : string to send)\n");
+		ft_printf("invalid args (1st : Server PID ; 2nd : string to send)\n");
 		return (0);
 	}
-	pid = atoi(argv[1]);
-	send_string(argv[2], pid);
+	pid_server = atoi(argv[1]);
+	send_string(argv[2], pid_server);
 	return (0);
 }

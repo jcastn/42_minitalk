@@ -1,0 +1,3 @@
+[submodule "libft_upgraded"]
+	path = libft_upgraded
+	url = git@github.com:jcastn/42_libft_upgraded.git

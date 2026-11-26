@@ -1,59 +1,64 @@
-
 /* MiniTalk Server */
-#include <signal.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
+#include "minitalk.h"
 
-static char g_byte;
+static t_dyntab	g_tab;
 
-void signal_handler(int signum)
+void	signal_handler(int signum, siginfo_t *info, void *context)
 {
-	if (signum == SIGUSR1)
-	{
-		g_byte = (g_byte << 1);
-	}
-	else if (signum == SIGUSR2)
-	{
-		g_byte = (g_byte << 1) | 1;
-	}
+	int	pos;
+
+	(void)context;
+	(void)info;
+
+	pos = g_tab.count;
+	g_tab.data[pos] = (g_tab.data[pos] << 1) | (signum == SIGUSR2);
+	//kill(g_pid_client, SIGUSR1); /* Send Acknowledgement message */
 }
 
-int ft_strlen(char *str)
+void	alloc_dyntab(void)
 {
-	int i;
-
-	i = 0;
-	while (str[i])
-		i++;
-	return (i);
+	if (g_tab.size != 0)
+		free(g_tab.data);
+	g_tab.size = 4;
+	g_tab.data = ft_calloc(g_tab.size, sizeof(char));
+	g_tab.count = 0;
 }
 
-int main(void)
+int	main(void)
 {
-	struct sigaction sa;
-	int i;
-	pid_t pid;
+	struct sigaction	sa;
+	int					i;
+	pid_t				pid_serv;
 
-	pid = getpid();
-	printf("MiniTalk Server (PID : %d)\n", pid);
-	sa.sa_handler = signal_handler;
+	pid_serv = getpid();
+	ft_printf("MiniTalk Server (PID : %d)\n", pid_serv);
+	sa.sa_sigaction = signal_handler;
 	sigemptyset(&sa.sa_mask);
-	sa.sa_flags = 0;
+	sa.sa_flags = SA_SIGINFO;
 	sigaction(SIGUSR1, &sa, NULL);
 	sigaction(SIGUSR2, &sa, NULL);
+	g_tab.size = 0;
+	alloc_dyntab();
 	while (1)
 	{
 		i = 0;
-		g_byte = 0;
 		while (i < 8)
 		{
 			pause();
-			// printf("received value : %d\n", received_signal);
 			i++;
 		}
-		if (g_byte == '\0')
-			write(1, "\n", 1);
-		write(1, &g_byte, 1);
+		if (g_tab.count >= g_tab.size - 1)
+		{
+			g_tab.data = ft_realloc(g_tab.data, g_tab.size, g_tab.size * 2);
+			//ft_realloc(g_tab.data, g_tab.size, g_tab.size * 2);
+			g_tab.size *= 2;
+		}
+		if (g_tab.data[g_tab.count] == '\0')
+		{
+			ft_printf("%s\n", g_tab.data);
+			alloc_dyntab();
+		}
+		else
+			g_tab.count++;
 	}
 }
